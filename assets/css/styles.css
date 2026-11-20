@@ -108,3 +108,7 @@ button {
 .open-modal:hover {
     background-color: #eee;
 }
+
+.no-scrolling {
+    overflow: hidden;
+}

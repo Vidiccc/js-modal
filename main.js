@@ -15,10 +15,31 @@ const $$ = document.querySelectorAll.bind(document);
 }
 // Hàm tạo: Modal
 function Modal() {
+    function getScrollbarWidth() {
+        if (getScrollbarWidth.result === undefined) {
+            const div = document.createElement("div");
+
+            Object.assign(div.style, {
+                overflow: "scroll",
+                position: "absolute",
+                top: "-9999px",
+            });
+
+            document.body.appendChild(div);
+            const scrollbarWidth = div.offsetWidth - div.clientWidth;
+            document.body.removeChild(div);
+
+            getScrollbarWidth.result = scrollbarWidth;
+            return scrollbarWidth;
+        }
+
+        return getScrollbarWidth.result;
+    }
+
     // Method mở - Khởi tạo -> event ->
     this.openModal = (options = {}) => {
         // Destructuring
-        const { templateId } = options;
+        const { templateId, closeOnBackdrop = true } = options;
         const template = $(`#${templateId}`);
         if (!template) {
             return console.error(`#${templateId} does not exist!`);
@@ -52,20 +73,28 @@ function Modal() {
             backdrop.classList.add("show");
         }, 0);
 
+        // Tắt scrolling dưới Modal
+        document.body.classList.add("no-scrolling");
+        document.body.style.paddingRight = getScrollbarWidth() + "px";
+
         // Event
         closeBtn.onclick = () => this.closeModal(backdrop);
 
-        backdrop.onclick = (e) => {
-            if (e.target === backdrop) {
-                this.closeModal(backdrop);
-            }
-        };
+        if (closeOnBackdrop) {
+            backdrop.onclick = (e) => {
+                if (e.target === backdrop) {
+                    this.closeModal(backdrop);
+                }
+            };
+        }
 
         document.onkeydown = (e) => {
             if (e.key === "Escape") {
                 this.closeModal(backdrop);
             }
         };
+
+        return backdrop;
     };
 
     // Method đóng
@@ -74,6 +103,8 @@ function Modal() {
         modalElement.ontransitionend = () => {
             modalElement.remove();
         };
+        document.body.classList.remove("no-scrolling");
+        document.body.style.paddingRight = "";
     };
 }
 
@@ -82,15 +113,32 @@ const modal = new Modal();
 
 // Từ object Modal tạo modal, truyền vào chuỗi html
 $("#open-modal-1").onclick = () => {
-    modal.openModal({
+    const modalElement = modal.openModal({
         templateId: "modal-1",
     });
+
+    const img = modalElement.querySelector("img");
+    console.log(img);
 };
 
 $("#open-modal-2").onclick = () => {
-    modal.openModal({
+    const modalElement = modal.openModal({
         templateId: "modal-2",
+        closeOnBackdrop: false,
     });
+
+    const form = modalElement.querySelector("#login-form");
+    if (form) {
+        form.onsubmit = function (e) {
+            e.preventDefault();
+            const formData = {
+                email: form.querySelector("#email").value.trim(),
+                password: form.querySelector("#password").value.trim(),
+            };
+
+            console.log(formData);
+        };
+    }
 };
 
 $("#open-modal-3").onclick = () => {
